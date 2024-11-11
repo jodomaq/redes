@@ -1,0 +1,7 @@
+mysql-connector-python
+openai
+requests
+python-dotenv
+selenium
+webdriver_manager
+clipboard

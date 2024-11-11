@@ -1,0 +1,5 @@
+Este proyecto tiene como finalidad publicar ofertas como afiliado de mercado libre, temu o algún otro servicio que se pueda agregar en un futuro, en de un grupo y una página de facebook. El cual deberá tener las siguientes características:
+1. Primero desde una computadora descargar usando el paquete Selenium las ofertas de redes sociales, almacenar nombre, url, foto y descripción en una base de datos. Esto se hará manualmente.
+2. En un servidor se colocará el código para que por medio del servicio de cron se ejecute el script diariamente para tomar aleatoriamente un artículo de la base de datos y mandarlo al grupo y página de facebook.
+3. Marcar en la base de datos el artículo tomado como publicado para que no vuelva a ser publicado.
+4. El proyecto debe tener su distribución de carpetas y archivos de acuerdo a los archivos de clases .py que deberán tener una tarea única y encapsulada
