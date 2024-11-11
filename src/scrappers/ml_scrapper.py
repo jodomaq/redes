@@ -1,5 +1,5 @@
-
-from config.settings import Settings
+from bs4 import BeautifulSoup
+from ...config.settings import Settings
 from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service
@@ -10,11 +10,11 @@ import time
 import clipboard as pc
 import random
 
-
 class MercadoLibreScrapper:
 
     def __init__(self):
-        self.tiempo = Settings.selenium_tiempo()
+        s=Settings()
+        self.tiempo = s.selenium_tiempo()
         chrome_options = Options()
         chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
@@ -72,7 +72,14 @@ class MercadoLibreScrapper:
         self.driver.get("https://www.mercadolibre.com.mx/")
         return lista_de_productos
     
-    def obtener_enlaces():
+    def obtener_enlaces(self):
         enlaces = []
-        
+        html = self.driver.page_source
+        soup = BeautifulSoup(html, "html.parser")
+        objeto = soup.find("window.__PRELOADED_STATE__")
+        print(objeto)
         return enlaces
+    
+
+ml = MercadoLibreScrapper
+e = ml.obtener_enlaces()
