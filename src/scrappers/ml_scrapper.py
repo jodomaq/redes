@@ -35,18 +35,17 @@ class MercadoLibreScrapper:
         pagina = random.randint(1, 20)
         url = "https://www.mercadolibre.com.mx/ofertas?page=" + str(pagina)
         self.driver.get(url)
-
-        
-    def buscar(self):
-        lista_de_productos = []
-        time.sleep(self.tiempo)
-        
-        promo = {
+        self.promo = {
             "url":"NADA",
             "titulo":"NADA",
             "imagen":"NADA",
             "precio":"NADA"
         }
+
+        
+    def buscar(self):
+        lista_de_productos = []
+        time.sleep(self.tiempo)
 
         try:
             titulo_producto = self.driver.find_element(By.XPATH,'//*[@id="ui-pdp-main-container"]/div[1]/div/div[1]/div[2]/div[1]/div/div[2]/h1')
@@ -93,34 +92,30 @@ class MercadoLibreScrapper:
         enlaces = []
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")
-        #print(soup)
-        #objeto = soup.find(string="window.__PRELOADED_STATE__")
-        #objeto = soup.find(string="script").text
-        #pattern = re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});')
-        #print(pattern)
-        #match = pattern.search(soup.text)
         script_tag = soup.find(string=re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});'))
         if script_tag:
-            # Extraer el contenido del <script>
             script_content = script_tag.string
             match = re.search(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});', script_content)
             if match:
                 js_object_str = match.group(1)
                 js_object = json.loads(js_object_str)
-                #print(js_object['data']['items'][0])
                 for item in js_object['data']['items']:
-                    print('URL = https://'+(item['metadata']['url']).strip())
-                    print('IMAGEN = ','https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp')
+                    #print('URL = https://'+(item['metadata']['url']).strip())
+                    #print('IMAGEN = ','https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp')
                     titulo = next(i['title']['text'] for i in item['components'] if i['type'] == 'title')
-                    print('TITULO = ',titulo)
+                    #print('TITULO = ',titulo)
                     precio = next(i['price']['current_price']['value'] for i in item['components'] if i['type'] == 'price')
-                    print('PRECIO = ',precio)
+                    #print('PRECIO = ',precio)
+                    self.promo['url'] = 'https://'+(item['metadata']['url']).strip()
+                    self.promo['titulo'] = titulo
+                    self.promo['imagen'] = 'https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp'
+                    self.promo['precio'] = precio
+                    enlaces.append(self.promo)
             else:
                 print("no se encontró match")
-        #data = objeto.split("=",1)[1]
         return enlaces
     
 
-ml = MercadoLibreScrapper()
-links = ml.obtener_enlaces()
-print(links)
+#ml = MercadoLibreScrapper()
+#links = ml.obtener_enlaces()
+#print(len(links))
