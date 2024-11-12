@@ -1,5 +1,10 @@
+#/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+import sys
+import os
+import re
+import json
 from bs4 import BeautifulSoup
-from ...config.settings import Settings
+#from ...config.settings import Settings
 from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service
@@ -9,6 +14,10 @@ from selenium.webdriver.chrome.options import Options
 import time
 import clipboard as pc
 import random
+ruta = os.path.abspath(os.path.join(__file__, "../../../config"))
+print(ruta)
+sys.path.insert(0, ruta)
+from settings import Settings
 
 class MercadoLibreScrapper:
 
@@ -19,7 +28,8 @@ class MercadoLibreScrapper:
         chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         pagina = random.randint(1, 20)
-        self.driver.get("https://www.mercadolibre.com.mx/ofertas?page=", pagina)
+        url = "https://www.mercadolibre.com.mx/ofertas?page=" + str(pagina)
+        self.driver.get(url)
 
         
     def buscar(self):
@@ -76,10 +86,21 @@ class MercadoLibreScrapper:
         enlaces = []
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")
-        objeto = soup.find("window.__PRELOADED_STATE__")
-        print(objeto)
+        #print(soup)
+        #objeto = soup.find(string="window.__PRELOADED_STATE__")
+        #objeto = soup.find(string="script").text
+        pattern = re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});')
+        match = pattern.search(soup.text)
+        if match:
+            js_object_str = match.group(1)
+            js_object = json.loads(js_object_str)
+            print(js_object)
+        else:
+            print("no se encontró match")
+        #data = objeto.split("=",1)[1]
         return enlaces
     
 
-ml = MercadoLibreScrapper
-e = ml.obtener_enlaces()
+ml = MercadoLibreScrapper()
+links = ml.obtener_enlaces()
+print(links)
