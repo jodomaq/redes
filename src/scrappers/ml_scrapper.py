@@ -1,4 +1,9 @@
+#MAC
 #/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+
+#UBUNTU
+#google-chrome --remote-debugging-port=9222 --user-data-dir=/.config/ --no-first-run --no-default-browser-check
+
 import sys
 import os
 import re
@@ -39,7 +44,8 @@ class MercadoLibreScrapper:
         promo = {
             "url":"NADA",
             "titulo":"NADA",
-            "imagen":"NADA"
+            "imagen":"NADA",
+            "precio":"NADA"
         }
 
         try:
@@ -75,7 +81,8 @@ class MercadoLibreScrapper:
         promo = {
             "url":pc.paste(),
             "titulo":self.producto + ": " + titulo_producto.text,
-            "imagen":imagen_producto.get_attribute("src")
+            "imagen":imagen_producto.get_attribute("src"),
+            "precio":""
         }
         lista_de_productos.add(promo)
         #self.driver.close()
@@ -89,14 +96,27 @@ class MercadoLibreScrapper:
         #print(soup)
         #objeto = soup.find(string="window.__PRELOADED_STATE__")
         #objeto = soup.find(string="script").text
-        pattern = re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});')
-        match = pattern.search(soup.text)
-        if match:
-            js_object_str = match.group(1)
-            js_object = json.loads(js_object_str)
-            print(js_object)
-        else:
-            print("no se encontró match")
+        #pattern = re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});')
+        #print(pattern)
+        #match = pattern.search(soup.text)
+        script_tag = soup.find(string=re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});'))
+        if script_tag:
+            # Extraer el contenido del <script>
+            script_content = script_tag.string
+            match = re.search(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});', script_content)
+            if match:
+                js_object_str = match.group(1)
+                js_object = json.loads(js_object_str)
+                #print(js_object['data']['items'][0])
+                for item in js_object['data']['items']:
+                    print('URL = https://'+(item['metadata']['url']).strip())
+                    print('IMAGEN = ','https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp')
+                    titulo = next(i['title']['text'] for i in item['components'] if i['type'] == 'title')
+                    print('TITULO = ',titulo)
+                    precio = next(i['price']['current_price']['value'] for i in item['components'] if i['type'] == 'price')
+                    print('PRECIO = ',precio)
+            else:
+                print("no se encontró match")
         #data = objeto.split("=",1)[1]
         return enlaces
     
