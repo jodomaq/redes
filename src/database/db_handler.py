@@ -1,4 +1,4 @@
-import mysql
+import mysql.connector as mysql
 from config.settings import Settings
 
 class DatabaseHandler():
@@ -19,8 +19,8 @@ class DatabaseHandler():
                 with db.cursor() as cursor:
                     
                     # Consulta segura usando placeholders
-                    query = "INSERT INTO post (tema, vender, url, url_image, publicada) VALUES (%s, %s, %s, %s, %s)"
-                    values = (promo["titulo"], 1, promo["url"], promo["imagen"], 0)
+                    query = "INSERT INTO ventas (titulo, url, imagen, precio, url_afiliados, publicada) VALUES (%s, %s, %s, %s, %s, %s)"
+                    values = (promo["titulo"], promo["url"], promo["imagen"], promo["precio"], promo["url_afiliados"], 0)
                     
                     # Ejecutar la consulta
                     cursor.execute(query, values)
@@ -31,6 +31,8 @@ class DatabaseHandler():
                     # Retornar el id del último registro insertado
                     return cursor.lastrowid
             
-        except mysql.connector.Error as err:
+        except Exception as err:
             print(f"Error: {err}")
             return None
+
+

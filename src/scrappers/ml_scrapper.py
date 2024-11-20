@@ -16,80 +16,59 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from .base_scrapper import Scrapper
 import time
 import clipboard as pc
 import random
-ruta = os.path.abspath(os.path.join(__file__, "../../../config"))
-print(ruta)
-sys.path.insert(0, ruta)
-from settings import Settings
+#ruta = os.path.abspath(os.path.join(__file__, "../../../config"))
+#print(ruta)
+#sys.path.insert(0, ruta)
+#from settings import Settings
 
-class MercadoLibreScrapper:
+class MercadoLibreScrapper(Scrapper):
 
     def __init__(self):
-        s=Settings()
-        self.tiempo = s.selenium_tiempo()
-        chrome_options = Options()
-        chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         pagina = random.randint(1, 20)
         url = "https://www.mercadolibre.com.mx/ofertas?page=" + str(pagina)
+        self.driver = super().controlador()
         self.driver.get(url)
+        self.tiempo = super().tiempo()
+        time.sleep(self.tiempo)
         self.promo = {
             "url":"NADA",
             "titulo":"NADA",
             "imagen":"NADA",
-            "precio":"NADA"
+            "precio":"NADA",
+            "url_afiliados":"NADA"
         }
+        self.enlaces = []
 
         
-    def buscar(self):
-        lista_de_productos = []
-        time.sleep(self.tiempo)
-
+    def obtener_enlace_afiliados_rand(self):
         try:
-            titulo_producto = self.driver.find_element(By.XPATH,'//*[@id="ui-pdp-main-container"]/div[1]/div/div[1]/div[2]/div[1]/div/div[2]/h1')
-            time.sleep(self.tiempo)
-        except:
-            titulo_producto = self.driver.find_element(By.XPATH,'//*[@id="header"]/div/div[2]/h1')
-            time.sleep(self.tiempo)
-        
-        #/html/body/main/div[2]/div[5]/div[2]/div[2]/div[1]/div/div/div/div/span[1]/figure/img
-        try:
-            imagen_producto = self.driver.find_element(By.XPATH, "/html/body/main/div[2]/div[5]/div[2]/div[2]/div[1]/div/div/div/div/span[1]/figure/img")
-        except:
-            try:
-                imagen_producto = self.driver.find_element(By.XPATH, "/html/body/main/div[2]/div[6]/div[2]/div[2]/div[1]/div/div/div/div/span[1]/figure/img")
-            except:
-                try:
-                    imagen_producto = self.driver.find_element(By.XPATH, "/html/body/main/div[2]/div[3]/div[2]/div[2]/div[1]/div/div[1]/div[1]/div/div/div/span[1]/figure/img")
-                except:
-                    imagen_producto = self.driver.find_element(By.XPATH, "/html/body/main/div[2]/div[3]/div[3]/div[2]/div[1]/div/div[1]/div[1]/div/div/div/span[1]/figure/img")
-        
-        
-        
-        boton_gen_link = self.driver.find_element(By.XPATH, '//*[@id="P0-1"]')
-        
-        if boton_gen_link.is_displayed and boton_gen_link.is_enabled:
-            boton_gen_link.click()
-            time.sleep(self.tiempo)
-        else:
-            self.driver.get("https://www.mercadolibre.com.mx/")
-            return promo
-        
-        promo = {
-            "url":pc.paste(),
-            "titulo":self.producto + ": " + titulo_producto.text,
-            "imagen":imagen_producto.get_attribute("src"),
-            "precio":""
-        }
-        lista_de_productos.add(promo)
-        #self.driver.close()
-        self.driver.get("https://www.mercadolibre.com.mx/")
-        return lista_de_productos
+            #print("len de enlaces: ", len(self.enlaces))
+            if len(self.enlaces) > 0:
+                for x in range(len(self.enlaces)):
+                    producto = random.randint(0, len(self.enlaces))
+                    url = self.enlaces[producto]["url"].strip()
+                    #print("enlace: -"+str(url)+"-")
+                    self.driver.get(str(url))
+                    #self.driver.get("https://google.com")
+                    time.sleep(self.tiempo)
+                    boton_gen_link = self.driver.find_element(By.XPATH, '//*[@id="P0-1"]')
+                    
+                    if boton_gen_link.is_displayed and boton_gen_link.is_enabled:
+                        time.sleep(self.tiempo)
+                        boton_gen_link.click()
+                        time.sleep(self.tiempo)
+                        return str(pc.paste())
+                        exit
+            else:
+                raise Exception("Primero debe obtener promociones")
+        except Exception as e:
+            print(e)
     
-    def obtener_enlaces(self):
-        enlaces = []
+    def obtener_promociones(self):
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")
         script_tag = soup.find(string=re.compile(r'window\.__PRELOADED_STATE__\s*=\s*(\{.*\});'))
@@ -110,12 +89,58 @@ class MercadoLibreScrapper:
                     self.promo['titulo'] = titulo
                     self.promo['imagen'] = 'https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp'
                     self.promo['precio'] = precio
-                    enlaces.append(self.promo)
+                    self.promo['url_afiliados'] = self.obtener_enlace_afiliado('https://'+(item['metadata']['url']).strip())
+                    if self.obtener_enlace_afiliado('https://'+(item['metadata']['url']).strip()) is not None:
+                        self.enlaces.append(self.promo)
+                        print(self.promo)
             else:
                 print("no se encontró match")
-        return enlaces
-    
+        return self.enlaces
+
+    def obtener_afiliados_lista(self):
+        try:
+            print("len de enlaces: ", len(self.enlaces))
+            if len(self.enlaces) > 0:
+                i=0
+                for p in self.enlaces:
+                    url = p["url"].strip()
+                    print(url)
+                    self.driver.get(str(url))
+                    time.sleep(self.tiempo)
+                    boton_gen_link = self.driver.find_element(By.XPATH, '//*[@id="P0-1"]')
+                    
+                    if boton_gen_link.is_displayed and boton_gen_link.is_enabled:
+                        time.sleep(self.tiempo)
+                        boton_gen_link.click()
+                        time.sleep(self.tiempo)
+                        self.enlaces[i]["url_afiliados"] = str(pc.paste())
+                        print(self.enlaces[i])
+                        print(i)
+                    i=i+1
+            else:
+                raise Exception("Primero debe obtener promociones")
+            return self.enlaces
+        except Exception as e:
+            print("Error en obtener_afiliados_lista")
+            print(e)
+
+
+    def obtener_enlace_afiliado(self, enlace_generico):
+        try:
+            self.driver.get(enlace_generico)
+            time.sleep(self.tiempo)
+            boton_gen_link = self.driver.find_element(By.XPATH, '//*[@id="P0-1"]')
+            if boton_gen_link.is_displayed and boton_gen_link.is_enabled:
+                time.sleep(self.tiempo)
+                boton_gen_link.click()
+                time.sleep(self.tiempo)
+                return(str(pc.paste()))
+        except Exception as e:
+            print("Error en obtener_afiliados_lista")
+            print(e)
+
 
 #ml = MercadoLibreScrapper()
-#links = ml.obtener_enlaces()
-#print(len(links))
+#links = ml.obtener_promociones()
+#afilia = ml.obtener_enlace_afiliados()
+#print(afilia)
