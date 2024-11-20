@@ -20,3 +20,9 @@ class Settings:
             "servidor":os.getenv("host")
         }
         return db_sett
+    
+    def FB_settings(self):
+        fb_sett = {
+        "page_id":os.getenv("fb_page_id"),
+        "page_access_token":os.getenv("token_fbap")
+        }
