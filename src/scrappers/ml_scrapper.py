@@ -43,7 +43,6 @@ class MercadoLibreScrapper(Scrapper):
         }
         self.enlaces = []
 
-        
     def obtener_enlace_afiliados_rand(self):
         try:
             #print("len de enlaces: ", len(self.enlaces))
@@ -79,20 +78,21 @@ class MercadoLibreScrapper(Scrapper):
                 js_object_str = match.group(1)
                 js_object = json.loads(js_object_str)
                 for item in js_object['data']['items']:
-                    #print('URL = https://'+(item['metadata']['url']).strip())
-                    #print('IMAGEN = ','https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp')
                     titulo = next(i['title']['text'] for i in item['components'] if i['type'] == 'title')
-                    #print('TITULO = ',titulo)
                     precio = next(i['price']['current_price']['value'] for i in item['components'] if i['type'] == 'price')
-                    #print('PRECIO = ',precio)
-                    self.promo['url'] = 'https://'+(item['metadata']['url']).strip()
-                    self.promo['titulo'] = titulo
-                    self.promo['imagen'] = 'https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp'
-                    self.promo['precio'] = precio
-                    self.promo['url_afiliados'] = self.obtener_enlace_afiliado('https://'+(item['metadata']['url']).strip())
-                    if self.obtener_enlace_afiliado('https://'+(item['metadata']['url']).strip()) is not None:
-                        self.enlaces.append(self.promo)
-                        print(self.promo)
+                    url = 'https://'+(item['metadata']['url']).strip()
+                    imagen = 'https://http2.mlstatic.com/D_NQ_NP_2X_'+(item['pictures']['pictures'][0]['id']).strip()+'-F.webp'
+                    enlace_afiliado = self.obtener_enlace_afiliado('https://'+(item['metadata']['url']).strip())
+                    if enlace_afiliado is not None:
+                        promo = {
+                            'url': url,
+                            'titulo': titulo,
+                            'imagen': imagen,
+                            'precio': precio,
+                            'url_afiliados': enlace_afiliado,
+                        }
+                        self.enlaces.append(promo)
+                        print(self.enlaces)
             else:
                 print("no se encontró match")
         return self.enlaces
@@ -123,7 +123,6 @@ class MercadoLibreScrapper(Scrapper):
         except Exception as e:
             print("Error en obtener_afiliados_lista")
             print(e)
-
 
     def obtener_enlace_afiliado(self, enlace_generico):
         try:
